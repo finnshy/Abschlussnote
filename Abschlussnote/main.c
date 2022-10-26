@@ -49,8 +49,8 @@ int main() {
 		{"Wahlpflichtprojekt","PO ",10,0},
 		{"Bachelorarbeit mit Kolloquium","AN1",70,0}	//30
 	};
-	//ausgabe(fach);
-	//eingabe(fach);
+	ausgabe(fach);
+	eingabe(fach);
 	printNote(fach);
 	return 0;
 }
@@ -80,7 +80,7 @@ int getSum(struct sFach fach[30])
 	int sum = 0;
 	for (int i = 0; i < 30; i++)
 	{
-		sum += fach[i].Note;
+		sum += fach[i].Note * fach[i].Gewichtung;
 	}
 	return sum;
 }
@@ -114,7 +114,7 @@ void printNote(struct sFach fach[30])
 {
 	const double NENNER = 4950.0;
 	int summe = getSum(fach);
-	double note = (double)summe / NENNER;
+	double note = (double)(summe) / NENNER *15;
 
 	printf("Summe der insgesamt gesammelten Punkte: %d\nGesamtabschlussnote: %.3lf = ", summe,note);
 

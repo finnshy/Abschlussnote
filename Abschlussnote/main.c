@@ -108,7 +108,7 @@ int getInt(char* text,int min, int max, int oldValue)
 
 	do {
 		/* print user request */
-		printf("%s (%d - %d, alter Wert: %d): ", text, min, max, oldValue);
+		printf("%s", text);
 
 		/* get user input */
 		fgets(line, 50, stdin);

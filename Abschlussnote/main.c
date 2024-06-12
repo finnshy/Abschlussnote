@@ -2,7 +2,7 @@
 	Programm 2: Abschlussnote
 	Dieses Programm berechnet aus den eingegebenen Noten die Abschlussnote des Studiengangs E&I-Technik.
 	Gibt diese aus und lässt diese Verändern. Die Noten werden in eine Datei abgespeichert, sodass diese
-	anschließend auch eingelesen werden können. Zudem kann zwischen den verschiedenen Vertiefungsrichtungen 
+	anschließend auch eingelesen werden können. Zudem kann zwischen den verschiedenen Vertiefungsrichtungen
 	gewählt werden.
 	Autoren: Finn Ole Deutschmann, Severin Brachmann
 	Datum: 16.11.2022
@@ -26,13 +26,15 @@ struct sFach {
 
 void ausgabe(struct sFach fach[30]);										//gibt die Tabelle mit den Noten aus
 void eingabe(struct sFach fach[30]);										//lässt den User die Noten eingeben
-int getSum(struct sFach fach[30]);											//Berrechnet die Summe der Fächer
+int getSum(struct sFach fach[30], int a);											//Berrechnet die Summe der Fächer
 int getInt(char* text, int min, int max, int oldValue);						//fragt einen Int vom User ab
 void printNote(struct sFach fach[30]);										//druckt Note etc. aus
 void useData(struct sFach fach[30], int size, char* fileName, char* mode);	//speichert ins File oder liest aus file
 int userInput(struct sFach fach[30]);										//fragt Buchstaben von User ab und ruft Unterfunktion auf
 void setVertiefung(struct sFach fach[30]);									//Setzt die Vertiefungsrichtung
 char getC(char text[]);														//Fragt character von user ab
+int checkNoten(struct sFach fach[30]);
+double punkteZuNote(int punkte);
 
 int main() {
 	//Initialisierung der struct
@@ -66,7 +68,7 @@ int main() {
 		{"Wahlpflichtmodul 1","WP1",10,0},
 		{"Wahlpflichtmodul 2","WP2",10,0},
 		{"Wahlpflichtprojekt","PO ",10,0},
-		{"Bachelorarbeit mit Kolloquium","AN1",70,0}	//30
+		{"Bachelorarbeit mit Kolloquium","BA ",70,0}	//30
 	};
 	useData(fach, sizeof(fach), "Noten.txt", "rb");			//lese aus Datei
 	int abbruch = 0;
@@ -86,7 +88,7 @@ void ausgabe(struct sFach fach[30])
 	printf("\n1. Jahr |2. Jahr |3.Jahr\n-------------------------\n");
 	for (int i = 0; i < 10; i++)
 	{
-		printf("%s:%2d  |%s:%2d  | %s:%2d\n", fach[i].Abkuerzung, fach[i].Note, fach[i + 10].Abkuerzung, fach[i + 10].Note, fach[i + 20].Abkuerzung, fach[i + 20].Note);
+		printf("%s: %2d |%s: %2d |%s: %2d\n", fach[i].Abkuerzung, fach[i].Note, fach[i + 10].Abkuerzung, fach[i + 10].Note, fach[i + 20].Abkuerzung, fach[i + 20].Note);
 	}
 	printf("\n");
 }
@@ -94,28 +96,48 @@ void ausgabe(struct sFach fach[30])
 //Eingabe der Noten für ein ausgewähltes Studienjahr
 void eingabe(struct sFach fach[30])
 {
-	int studienjahr = getInt("Geben Sie das Studienjahr ein, f\201r das Sie die Noten eingeben wollen.\n", 1, 3,-1);
+	int studienjahr = getInt("Geben Sie das Studienjahr ein, f\201r das Sie die Noten eingeben wollen.\n", 1, 3, -1);
 	for (int i = (studienjahr - 1) * 10; i < (studienjahr - 1) * 10 + 10; i++)
 	{
 		printf("Bitte die Note f\201r das Fach %s an:\n", fach[i].Modulbezeichnung);
-		fach[i].Note = getInt("", 0, 15,fach[i].Note);
+		fach[i].Note = getInt("", 0, 15, fach[i].Note);
 	}
 
 }
 
 //berechnet die Summe der Noten und gibt diese zurück
-int getSum(struct sFach fach[30])
+int getSum(struct sFach fach[30], int a)
 {
 	int sum = 0;
 	for (int i = 0; i < 30; i++)
 	{
-		sum += fach[i].Note * fach[i].Gewichtung;
+		switch (a) {
+		case 0:
+			sum += fach[i].Note * fach[i].Gewichtung;
+			break;
+		case 1: //best
+			if (!fach[i].Note) {
+				sum += 15 * fach[i].Gewichtung;
+			}
+			else {
+				sum += fach[i].Note * fach[i].Gewichtung;
+			}
+			break;
+		case 2: //worst
+			if (!fach[i].Note) {
+				sum += 5 * fach[i].Gewichtung;
+			}
+			else {
+				sum += fach[i].Note * fach[i].Gewichtung;
+			}
+			break;
+		}
 	}
 	return sum;
 }
 
 /* Reads an int value from the user. */
-int getInt(char* text,int min, int max, int oldValue)
+int getInt(char* text, int min, int max, int oldValue)
 {
 	char line[50];      /* user input line */
 	int newValue = 0;     /* new user input value */
@@ -159,11 +181,31 @@ int getInt(char* text,int min, int max, int oldValue)
 void printNote(struct sFach fach[30])
 {
 	const double NENNER = 4950.0;
-	int summe = getSum(fach);	//Berechnen der Summe
+
+	int summe = getSum(fach,0);	//Berechnen der Summe
+	int bsumme = getSum(fach, 1);
+	int wsumme = getSum(fach, 2);
+
+	double durchschnitt = 0;
+	int counter = 0;
+	for (int i = 0; i < 30; i++)
+	{
+		if (fach[i].Note) {
+			durchschnitt += fach[i].Note;
+			counter++;
+		}
+	}
+	durchschnitt /= (double)counter;
+	printf("Aktueller Durchschnitt: %lf\n",durchschnitt);
+
+	
 	double note = (double)(summe) / NENNER * 15; //Berechnen der Note
+	double bnote = (double)(bsumme) / NENNER * 15; //Berechnen der Note
+	double wnote = (double)(wsumme) / NENNER * 15; //Berechnen der Note
 
 	//ausgabe der Gesamtnote
-	printf("Summe der insgesamt gesammelten Punkte: %d\nGesamtabschlussnote: %.3lf = ", summe, note);
+	printf("Beste Mögliche Note: %d/4950 -> %lf\nSchlechteste Mögliche Note: %d/4950 -> %lf\n\n", bsumme,bnote, wsumme,wnote);
+	printf("Summe der insgesamt gesammelten Punkte: %d/4950\nGesamtabschlussnote: %lf = ", summe, note);
 
 	//Ausgabe des Texts.
 	if (summe >= 4785) {
@@ -193,6 +235,22 @@ void printNote(struct sFach fach[30])
 		}
 	}
 	printf("\n");
+}
+
+double punkteZuNote(int punkte) {
+	double note = 0;
+	if (punkte > 0) {
+		 note = 5 - (double)(punkte / 3);
+		switch (punkte % 3) {
+		case 0:
+			note += 0.7;
+			break;
+		case 1:
+			note += 0.3;
+			break;
+		}
+	}
+	return note;
 }
 
 //Ließt oder schreibt in die angegebene Datei.
@@ -232,7 +290,7 @@ void useData(struct sFach fach[30], int size, char* fileName, char* mode)
 //returnt 1 wenn programm beendet werden soll.
 int userInput(struct sFach fach[30])
 {
-	int retval = 0;									
+	int retval = 0;
 	int abbruch = 0;	//while schleifen Variable
 	char ch;
 	while (!abbruch) {	//Solange keine gültige eingabe gemach wurde:
@@ -255,7 +313,7 @@ int userInput(struct sFach fach[30])
 //Setzt die Vertiefungsrichtung
 void setVertiefung(struct sFach fach[30])
 {
-	int vertiefung = getInt("Bitte geben Sie die gew\201nschte Vertiefungsrichtung an:\nAutomatisierungs- und Energietechnik [1]\nDigitale Informationstechnik [2]\nKommunikationstechnik [3]\n", 1, 3,-1);
+	int vertiefung = getInt("Bitte geben Sie die gew\201nschte Vertiefungsrichtung an:\nAutomatisierungs- und Energietechnik [1]\nDigitale Informationstechnik [2]\nKommunikationstechnik [3]\n", 1, 3, -1);
 	switch (vertiefung) {
 	case 1:
 		strcpy(fach[19].Abkuerzung, "ST ");
@@ -272,7 +330,7 @@ void setVertiefung(struct sFach fach[30])
 		strcpy(fach[24].Modulbezeichnung, "Energietechnik");
 		strcpy(fach[25].Abkuerzung, "PA ");
 		strcpy(fach[25].Modulbezeichnung, "Prozessautomatisierung");
-		if (getInt("Bitte geben Sie die gew\201nschte Vertiefungsfach an:\nZustandsregelung [1]\nRegenerative Energien [2]\n", 1, 2,-1)) {
+		if (getInt("Bitte geben Sie die gew\201nschte Vertiefungsfach an:\nZustandsregelung [1]\nRegenerative Energien [2]\n", 1, 2, -1)) {
 			strcpy(fach[26].Abkuerzung, "ZT ");
 			strcpy(fach[26].Modulbezeichnung, "Zustandsregelung");
 		}
@@ -282,20 +340,20 @@ void setVertiefung(struct sFach fach[30])
 		}
 		break;
 	case 2:
-		strcpy(fach[19].Abkuerzung, "EL3");
-		strcpy(fach[19].Modulbezeichnung, "Elektronik 3");
-		strcpy(fach[20].Abkuerzung, "GN ");
-		strcpy(fach[20].Modulbezeichnung, "Grundlagen der Nachrichtentechnik");
-		strcpy(fach[21].Abkuerzung, "DY ");
-		strcpy(fach[21].Modulbezeichnung, "Digitale Systeme");
-		strcpy(fach[22].Abkuerzung, "BS ");
-		strcpy(fach[22].Modulbezeichnung, "Betriebssysteme");
-		strcpy(fach[23].Abkuerzung, "DV ");
-		strcpy(fach[23].Modulbezeichnung, "Digitale Signalverarbeitung");
-		strcpy(fach[24].Abkuerzung, "D\232 ");
-		strcpy(fach[24].Modulbezeichnung, "Digitale \232abertragungstechnik");
-		strcpy(fach[25].Abkuerzung, "BU ");
-		strcpy(fach[25].Modulbezeichnung, "Bussysteme und Sensorik");
+		strcpy(fach[18].Abkuerzung, "EL3");
+		strcpy(fach[18].Modulbezeichnung, "Elektronik 3");
+		strcpy(fach[19].Abkuerzung, "GN ");
+		strcpy(fach[19].Modulbezeichnung, "Grundlagen der Nachrichtentechnik");
+		strcpy(fach[20].Abkuerzung, "DY ");
+		strcpy(fach[20].Modulbezeichnung, "Digitale Systeme");
+		strcpy(fach[21].Abkuerzung, "BS ");
+		strcpy(fach[21].Modulbezeichnung, "Betriebssysteme");
+		strcpy(fach[22].Abkuerzung, "DV ");
+		strcpy(fach[22].Modulbezeichnung, "Digitale Signalverarbeitung");
+		strcpy(fach[23].Abkuerzung, "D\232 ");
+		strcpy(fach[23].Modulbezeichnung, "Digitale \232bertragungstechnik");
+		strcpy(fach[24].Abkuerzung, "BU ");
+		strcpy(fach[24].Modulbezeichnung, "Bussysteme und Sensorik");
 		strcpy(fach[25].Abkuerzung, "MC ");
 		strcpy(fach[25].Modulbezeichnung, "Mikrocontrollersysteme");
 		break;
@@ -343,4 +401,15 @@ char getC( // [out] user input
 	} while (!finished);
 	// return user input
 	return cha;
+}
+
+int checkNoten(struct sFach fach[30])
+{
+	for (int i = 0; i < 30; i++)
+	{
+		if (!fach[i].Note) {
+			return 0;
+		}
+	}
+	return 1;
 }

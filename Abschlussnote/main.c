@@ -209,7 +209,7 @@ void printNote(struct sFach fach[30])
 
 	//Ausgabe des Texts.
 	if (summe >= 4785) {
-		printf("sehr gut mit (mit Auszeichnung)");
+		printf("sehr gut (mit Auszeichnung)");
 	}
 	else {
 		if (summe >= 4125) {
